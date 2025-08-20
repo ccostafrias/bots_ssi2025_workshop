@@ -41,8 +41,7 @@ Durante a oficina, vamos montar alguns bots simples e colocá-los diretamente no
 
 ## Estrutura básica do projeto
 
-- **bot.py** → Arquivo principal do bot em Python.  
-- **requirements.txt** → Dependências necessárias para rodar o projeto.  
+- **base_bot.py** → Arquivo principal do bot em Python.   
 
 ---
 
