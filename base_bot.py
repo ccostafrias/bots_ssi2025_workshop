@@ -1,7 +1,7 @@
 from telegram import Update
 from dotenv import load_dotenv
 from telegram.ext import Application, CommandHandler, ContextTypes
-from math import pow, round
+from math import pow
 import datetime
 import os
 
@@ -139,7 +139,7 @@ async def bhaskara(update: Update, context: ContextTypes.DEFAULT_TYPE):
 		delta = pow(b, 2) - (4*a*c)
 		
 		if delta < 0:
-			await update.message.reply_text('Delta negativo, não há raízes!')
+			await update.message.reply_text('Delta negativo, não há raízes reais!')
 			return
 		else:
 			x1 = round(((-1*b)+pow(delta, 0.5))/2*a, 2)
