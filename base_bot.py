@@ -1,8 +1,14 @@
 from telegram import Update
+from dotenv import load_dotenv
 from telegram.ext import Application, CommandHandler, ContextTypes
+from math import pow, round
 import datetime
+import os
 
-TOKEN = "INSIRA SEU TOKEN AQUI"
+# Carregar variáveis do arquivo .env
+load_dotenv()
+
+TOKEN = os.getenv("BOT_TOKEN")
 
 # Contador global da função contagem
 contador = 0
@@ -24,24 +30,23 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Olá! Bem vindo a Owlficina de criação de bots no telegram! Digite '/help' para ver os comandos disponíveis!")
 
 
-
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     comandos = [
         "/start - Inicia o bot",
         "/oi - Troca de cumprimentos simples",
         "/contagem - Conta quantas vezes esse comando já foi usado",
         "/aulas - Mostra as próximas aulas",
-	"/soma - Recebe 2 números e mostra o resultado da soma",
-	"/lembrete - Recebe um tempo (em minutos) e uma mensagem que será exibida depois desse tempo"
+	    "/soma - Recebe 2 números e mostra o resultado da soma",
+	    "/lembrete - Recebe um tempo (em minutos) e uma mensagem que será exibida depois desse tempo",
+        "/faltamdias - Recebe uma data (DD MM AAAA) e saiba quantos dias faltam para chegar nessa data",
+	    "/bhaskara - Recebe os coeficientes de uma equação quadrática e calcula as raízes da equação!",
     ]
     texto = "Comandos disponíveis neste bot:\n" + "\n".join(comandos)
     await update.message.reply_text(texto)
 
 
-
 async def oi(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Oi, tudo bem com você?")
-
 
 
 #Função que mostra o número de vezes que essa função foi ativada
@@ -51,7 +56,6 @@ async def contagem(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"Este comando já foi usado {contador} vezes!")
 
 
-
 # Função que decide o dia a mostrar
 def dia_aula_agora():
     now = datetime.datetime.now()
@@ -59,18 +63,17 @@ def dia_aula_agora():
     hora = now.hour + now.minute/60
 
     if dia_semana == 0:  # segunda
-        return "terca" if hora >= 12 else "segunda"
+        return "segunda"
     elif dia_semana == 1:
-        return "quarta" if hora >= 12 else "terca"
+        return "terca"
     elif dia_semana == 2:
-        return "quinta" if hora >= 12 else "quarta"
+        return "quarta"
     elif dia_semana == 3:
-        return "sexta" if hora >= 12 else "quinta"
+        return "quinta"
     elif dia_semana == 4:
-        return "segunda" if hora >= 12 else "sexta"
+        return "sexta"
     else:  # sábado ou domingo
         return "segunda"
-
 
 
 async def aulas(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -78,7 +81,6 @@ async def aulas(update: Update, context: ContextTypes.DEFAULT_TYPE):
     aulas = horario_aulas[dia]
     texto = f"Próximas aulas ({dia.capitalize()}):\n" + "\n".join(aulas)
     await update.message.reply_text(texto)
-
 
 
 async def soma(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -99,6 +101,57 @@ async def soma(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Digite apenas números, exemplo: /soma 10 20")
 
 
+async def faltamdias(update: Update, context: ContextTypes.DEFAULT_TYPE):
+	try:
+		if len(context.args) != 3:
+			await update.message.reply_text("Use assim: /faltam DD MM AAAA")
+			return
+
+		# Lê a data passada como argumento
+		dia = int(context.args[0]) 
+		mes = int(context.args[1])
+		ano = int(context.args[2])
+		data_alvo = datetime.date(ano, mes, dia)
+
+		# Data de hoje
+		hoje = datetime.date.today()
+
+		# Calcula diferença
+		if data_alvo < hoje:
+			await update.message.reply_text("Essa data já passou!")
+		else:
+			faltam_dias = (data_alvo - hoje).days
+			await update.message.reply_text(f"Faltam {faltam_dias} dias para {dia}/{mes}/{ano}")
+
+	except ValueError:
+		await update.message.reply_text("Formato inválido! Use: /faltam DD MM AAAA")
+		
+async def bhaskara(update: Update, context: ContextTypes.DEFAULT_TYPE):
+	try:
+		if len(context.args) != 3:
+			await update.message.reply_text('Use assim: /bhaskara a b c')
+			return
+		
+		a = float(context.args[0])
+		b = float(context.args[1])
+		c = float(context.args[2])
+		
+		delta = pow(b, 2) - (4*a*c)
+		
+		if delta < 0:
+			await update.message.reply_text('Delta negativo, não há raízes!')
+			return
+		else:
+			x1 = round(((-1*b)+pow(delta, 0.5))/2*a, 2)
+			if delta == 0:
+				await update.message.reply_text(f'Delta é 0, logo a única raíz é {x1}')
+			else:
+				x2 = round(((-1*b)-pow(delta, 0.5))/2*a, 2)
+				await update.message.reply_text(f'Delta é {delta}, logo há duas raízes: {x1} e {x2}')			
+		
+		
+	except ValueError:
+		await update.message.reply_text("Formato inválido! Use: /bhaskara a b c")	
 
 # Função que será chamada pelo job
 async def enviar_lembrete(context: ContextTypes.DEFAULT_TYPE):
@@ -142,6 +195,8 @@ def main():
     app.add_handler(CommandHandler("aulas", aulas))
     app.add_handler(CommandHandler("soma", soma))
     app.add_handler(CommandHandler("lembrete", lembrete))
+    app.add_handler(CommandHandler("faltamdias", faltamdias))
+    app.add_handler(CommandHandler("bhaskara", bhaskara))
 
     print("Bot rodando... Pressione Ctrl+C para parar.")
     app.run_polling()
